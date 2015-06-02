@@ -50,7 +50,8 @@ class FloatLiteralFinder(type(_real_pathfinder)):
         spec = _real_pathfinder.find_spec(fullname, path)
         if not spec: return spec
         loader = spec.loader
-        loader.__class__ = FloatLiteralLoader
+        if type(loader).__name__ == 'SourceFileLoader':
+            loader.__class__ = FloatLiteralLoader
         return loader
 
 sys.meta_path[-1] = FloatLiteralFinder
