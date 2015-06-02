@@ -16,3 +16,8 @@ inspecting the source and so on gives you the right information.
 At any rate, either way, this is only meant to let people test the
 idea for unexpected performance and/or usability issues.
 
+If you're interested in the more general issue of how to hack Python 
+without actually hacking Python, I wrote [a blog post][1] that you
+might find interesting.
+
+  [1]: http://stupidpythonideas.blogspot.com/2015/06/hacking-python-without-hacking-python.html
