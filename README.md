@@ -1,11 +1,18 @@
 # floatliteralhack
 A quick hack to make float literals save a str so Decimal can use it
 
-The right way to do this would be to change the parser, so that we
-generate a Num node with a str in it, or something equivalent. As a
-quick&dirty import hack solution that just modifies the AST after
-parsing, we can't do that; all we can do is call str on the float in
-the Num node. This is good enough to make Decimal(1.2) give you the
-right result (because repr(1.2) is '1.2'), but not good enough in
-general. It's only meant to let people test the idea for performance
-and/or usability issues.
+This just hacks the tokenizer to replace any number literal that looks
+like a float literal to instead be a constructor for a FloatLiteral
+subtype that remembers the token's string.
+
+See floatliteral_ast for an alternative implementation that transforms
+the AST instead of the tokens. The disadvantage of that implementation
+is that by the time you've got an AST, the literal token has already
+been transformed into a float; we can convert it back by calling str
+on it, but that only works for simple cases like Decimal(1.2) (because
+repr(1.2) is '1.2'), not in general. On the other hand, it means that
+inspecting the source and so on gives you the right information.
+
+At any rate, either way, this is only meant to let people test the
+idea for unexpected performance and/or usability issues.
+

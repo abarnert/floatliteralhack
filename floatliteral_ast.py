@@ -1,9 +1,8 @@
+import ast
 import importlib
 import importlib.machinery
 import decimal
-import io
 import sys
-from tokenize import tokenize, untokenize, NUMBER, STRING, NAME, OP
 
 def _call_with_frames_removed(f, *args, **kwargs):
     return f(*args, **kwargs)
@@ -26,19 +25,23 @@ class Decimal(decimal.Decimal):
 
 decimal.Decimal = Decimal
 
+class FloatNodeWrapper(ast.NodeTransformer):
+    def visit_Num(self, node):
+        if isinstance(node.n, float):
+            return ast.Call(func=ast.Name(id='FloatLiteral', ctx=ast.Load()),
+                            args=[ast.Str(s=str(node.n))], keywords=[])
+        return node
+
 class FloatLiteralLoader(importlib.machinery.SourceFileLoader):
     def source_to_code(self, data, path, *, _optimize=-1):
         source = importlib._bootstrap.decode_source(data)
-        t = tokenize(io.BytesIO(source.encode('utf-8')).readline)
-        nt = []
-        for num, val, *stuff in t:
-            if num == NUMBER and ('.' in val or 'e' in val or 'E' in val):
-                nt.extend([(NAME, 'FloatLiteral'),
-                            (OP, '('), (STRING, repr(val)), (OP, ')')])
-            else:
-                nt.append((num, val))
-        source = untokenize(nt).decode('utf-8')        
-        return _call_with_frames_removed(compile, source, path, 'exec',
+        tree = _call_with_frames_removed(compile, source, path, 'exec',
+                                         dont_inherit=True,
+                                         optimize=_optimize,
+                                         flags=ast.PyCF_ONLY_AST)        
+        tree = FloatNodeWrapper().visit(tree)
+        ast.fix_missing_locations(tree)
+        return _call_with_frames_removed(compile, tree, path, 'exec',
                                          dont_inherit=True,
                                          optimize=_optimize)
 
